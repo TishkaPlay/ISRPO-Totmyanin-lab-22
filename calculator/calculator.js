@@ -1,105 +1,94 @@
 export class Calculator {
-    constructor() {
-        this.display = document.getElementById("display");
-        this.expression = "";
+    constructor(displayElement) {
+        this.display = displayElement;
+        this.expression = '';
         this.hasError = false;
     }
 
-    init() {
-        document.querySelectorAll("button").forEach((button) => {
-            button.addEventListener("click", () => {
-                this.handleButtonClick(button.textContent);
+    init(buttons) {
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.handleButtonClick(btn.textContent);
             });
         });
-        this.updateDisplay();
     }
 
     handleButtonClick(value) {
-        if (this.hasError && value !== "C") {
+        if (this.hasError && value !== 'C') {
             this.clear();
         }
-        if (value === "C") {
-            this.clear();
-        } else if (value === "=") {
-            this.calculate();
-        } else {
-            this.addToExpression(value);
-        }
+
+        if (value === 'C') return this.clear();
+        if (value === '=') return this.calculate();
+        
+        this.addToExpression(value);
     }
 
     addToExpression(value) {
-        if (this.isOperator(value) && this.isLastCharOperator()) {
-            this.expression = this.expression.slice(0, -1) + value;
-        } else if (value === "." && this.hasDuplicateDot()) {
-            return;
-        } else if (this.isOperator(value) && !this.expression && value !== "-") {
-            return;
-        } else {
-            this.expression += value;
-        }
+        if (this.expression === '' && this.isOperator(value) && value !== '-') return;
+        if (this.isLastCharOperator() && this.isOperator(value)) return;
+        if (value === '.' && this.hasDuplicateDot()) return;
+
+        this.expression += value;
         this.updateDisplay();
     }
 
     calculate() {
-        if (!this.expression || this.hasError) return;
+        if (!this.isValidExpression()) {
+            return this.showError();
+        }
+
         try {
             const result = this.safeEvaluate(this.expression);
-            if (!isFinite(result)) {
-                throw new Error("Некорректный результат");
+            if (result === Infinity || result === -Infinity || isNaN(result)) {
+                return this.showError();
             }
             this.expression = String(result);
-            this.hasError = false;
             this.updateDisplay();
-        } catch (error) {
-            this.showError("Ошибка");
+            this.hasError = false;
+        } catch {
+            this.showError();
         }
     }
 
     safeEvaluate(expr) {
-        if (!this.isValidExpression(expr)) {
-            throw new Error("Некорректное выражение");
-        }
-        return eval(expr);
+        const safeExpr = expr.replace(/[^0-9+\-*/.() ]/g, '');
+        return eval(safeExpr);
     }
 
-    isValidExpression(expr) {
-        error = expr.replace(/\s+/g, "");
-        const doubleOps = /[+\-*/]{2,}/;
-        if (doubleOps.text(expr)) return false;
-        if (/[+\-*/]$/.text(expr)) return false;
+    isValidExpression() {
+        if (this.expression === '') return false;
+        const lastChar = this.expression[this.expression.length - 1];
+        if (this.isOperator(lastChar)) return false;
         return true;
     }
 
     clear() {
-        this.expression = "";
+        this.expression = '';
         this.hasError = false;
         this.updateDisplay();
     }
 
     updateDisplay() {
-        if (this.hasError) return;
-        this.display.value = this.expression || "0";
+        this.display.value = this.expression || '0';
     }
 
-    showError(message) {
-        this.display.value = message;
+    showError() {
         this.hasError = true;
-        this.expression = "";
+        this.display.value = 'Ошибка';
     }
 
     isOperator(char) {
-        return ["+", "-", "*", "/"].includes(char);
+        return ['+', '-', '*', '/'].includes(char);
     }
 
     isLastCharOperator() {
-        if (!this.expression) return false;
-        const lastChar = this.expression.slice(-1);
-        return this.isOperator(lastChar);
+        return this.expression.length > 0 && this.isOperator(this.expression[this.expression.length - 1]);
     }
 
     hasDuplicateDot() {
         const parts = this.expression.split(/[\+\-\*\/]/);
-        const lastNumber = parts[parts.length - 1];
-        return lastNumber && lastNumber.includes(".");
+        const currentNumber = parts[parts.length - 1];
+        return currentNumber.includes('.');
     }
 }

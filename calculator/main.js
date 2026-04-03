@@ -1,35 +1,41 @@
-import { Calculator } from "./calculator.js";
+import { Calculator } from './calculator.js';
 
-document.addEventListener("DOMContentLoaded", () => {
-    const calc = new Calculator();
-    calc.init();
+document.addEventListener('DOMContentLoaded', () => {
+    const display = document.getElementById('display');
+    const buttons = document.querySelectorAll('.buttons button');
+
+    const calc = new Calculator(display);
+    calc.init(buttons);
 });
 
-const display = document.getElementById("display");
-const buttons = document.querySelectorAll("button");
-const clearBtn = document.getElementById("clear");
+const display = document.getElementById('display');
+const buttons = document.querySelectorAll('button');
+const clearBtn = document.querySelector('button.C');
 
-let expression = "";
+let expression = '';
 
-buttons.forEach((button) => {
-    button.addEventListener("click", () => {
+buttons.forEach(button => {
+    button.addEventListener('click', () => {
         const value = button.textContent;
-        if (value === "C") {
-            expression = "";
-            display.value = "";
+
+        if (value === 'C') {
+            expression = '';
+            display.value = '';
             return;
         }
 
-        if (value === "=") {
+        if (value === '=') {
             try {
-                expression = eval(expression);
-                display.value = expression;
-            } catch {
-                display.value = "Ошибка";
-                expression = "";
+                const result = eval(expression);
+                expression = String(result);
+                display.value = result;
+            } catch (error) {
+                display.value = 'Ошибка';
+                expression = '';
             }
             return;
         }
+
         expression += value;
         display.value = expression;
     });
